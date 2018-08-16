@@ -1,0 +1,21 @@
+{
+	"myNetworkPage" : "https://www.linkedin.com/mynetwork/",
+	"verifyUrl" : "mynetwork",
+	"login":
+	{
+		"url" : "https://www.linkedin.com/uas/login?session_redirect=%2Fvoyager%2FloginRedirect%2Ehtml&fromSignIn=true&trk=uno-reg-join-sign-in",
+		"verifyUrl" : "redirect",
+		"usernameTbId" : "session_key-login",
+		"passwordTbId" : "session_password-login",
+		"connectBtnId" : "btn-primary"
+	},
+	"friend" :
+	{
+		"parentClass" : "pymk-card__details pv0 ph2 text-align-center mt1",
+		"nameClass" : "pymk-card__name Sans-15px-black-85%-semibold",
+		"descriptionClass": "pymk-card__occupation Sans-13px-black-55%",
+		"insightClass" : "member-insights__info",
+		"addClass" : "button-secondary-small",
+		"closeScript" : "document.getElementsByClassName('pymk-card__close-btn')[0].click()"
+	}
+}
