@@ -76,10 +76,10 @@ public class FriendsGrabber extends Thread
 						break;
 					case FAILED:
 						log("login failed", LogTypeEnum.ERROR);
-						break;
+						return;
 					case LOGIC_FAILURE:
 						log("login failed - logic failure", LogTypeEnum.ERROR);
-						break;
+						return;
 				}
 
 				if (isInterrupted())

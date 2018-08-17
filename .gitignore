@@ -106,3 +106,5 @@ tmp/
 *.bak
 *.swp
 *~.nib
+
+settings.json
