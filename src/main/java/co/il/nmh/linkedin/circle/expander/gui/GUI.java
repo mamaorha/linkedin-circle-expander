@@ -1,19 +1,13 @@
 package co.il.nmh.linkedin.circle.expander.gui;
 
 import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.Set;
-
-import javax.swing.JFrame;
 
 import co.il.nmh.easy.swing.components.EasyConsolePanel;
 import co.il.nmh.easy.swing.components.EasyPaddingPanel;
+import co.il.nmh.easy.swing.components.gui.EasyFrame;
 import co.il.nmh.linkedin.circle.expander.core.FriendsGrabber;
 import co.il.nmh.linkedin.circle.expander.core.listeners.FriendsGrabberListener;
 import co.il.nmh.linkedin.circle.expander.data.enums.LogTypeEnum;
@@ -30,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author Maor Hamami
  */
 @Slf4j
-public class GUI extends JFrame implements LoginPanelListener, ActionPanelListener, FriendsGrabberListener
+public class GUI extends EasyFrame implements LoginPanelListener, ActionPanelListener, FriendsGrabberListener
 {
 	private static final long serialVersionUID = -7225940459313107238L;
 
@@ -43,23 +37,11 @@ public class GUI extends JFrame implements LoginPanelListener, ActionPanelListen
 
 	public GUI()
 	{
-		setTitle("Linkedin Circle Expander");
-
-		buildPanel();
-		addEvents();
-
-		pack();
-		setVisible(true);
-
-		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-		int height = gd.getDisplayMode().getHeight();
-		height -= height / 1.7;
-
-		setMinimumSize(new Dimension(gd.getDisplayMode().getWidth() / 4, height));
-		setLocationRelativeTo(null);
+		super("Linkedin Circle Expander", 1.7, 4);
 	}
 
-	private void buildPanel()
+	@Override
+	protected void buildPanel()
 	{
 		setLayout(new GridBagLayout());
 
@@ -100,39 +82,27 @@ public class GUI extends JFrame implements LoginPanelListener, ActionPanelListen
 		add(new EasyPaddingPanel(consolePanel, 0, 5, 5, 5), gridBagConstraints);
 	}
 
-	private void addEvents()
+	@Override
+	protected void addEvents()
 	{
-		this.addWindowListener(new WindowAdapter()
-		{
-			@Override
-			public void windowClosing(WindowEvent e)
-			{
-				stopFriendsGrabber();
-				saveSettings();
-				System.exit(0);
-			}
-		});
-
 		loginPanel.addLoginPanelListener(this);
 		actionPanel.addActionPanelListener(this);
 	}
 
-	public void lockGUI(boolean lock)
+	@Override
+	public void close()
 	{
-		filterPanel.lockGUI(lock);
-		loginPanel.lockGUI(lock);
+		stopFriendsGrabber();
+		saveSettings();
+		super.close();
 	}
 
 	@Override
-	public void usernameUpdate(String username)
+	public void stopped()
 	{
-		actionPanel.setUsername(username);
-	}
-
-	@Override
-	public void passwordUpdate(String password)
-	{
-		actionPanel.setPassword(password);
+		friendsGrabber = null;
+		actionPanel.stop();
+		lockGUI(false);
 	}
 
 	@Override
@@ -152,23 +122,18 @@ public class GUI extends JFrame implements LoginPanelListener, ActionPanelListen
 	public void stop()
 	{
 		stopFriendsGrabber();
-		lockGUI(false);
-	}
-
-	private void stopFriendsGrabber()
-	{
-		if (null != friendsGrabber)
-		{
-			friendsGrabber.interrupt();
-			friendsGrabber = null;
-		}
 	}
 
 	@Override
-	public void stopped()
+	public void usernameUpdate(String username)
 	{
-		friendsGrabber = null;
-		actionPanel.stop();
+		actionPanel.setUsername(username);
+	}
+
+	@Override
+	public void passwordUpdate(String password)
+	{
+		actionPanel.setPassword(password);
 	}
 
 	@Override
@@ -187,6 +152,12 @@ public class GUI extends JFrame implements LoginPanelListener, ActionPanelListen
 		}
 	}
 
+	public void lockGUI(boolean lock)
+	{
+		filterPanel.lockGUI(lock);
+		loginPanel.lockGUI(lock);
+	}
+
 	private void saveSettings()
 	{
 		String username = loginPanel.getUsername();
@@ -197,5 +168,14 @@ public class GUI extends JFrame implements LoginPanelListener, ActionPanelListen
 		settingsProperties.setFilter(filter);
 
 		SharedResources.INSTANCE.saveSettings();
+	}
+
+	private void stopFriendsGrabber()
+	{
+		if (null != friendsGrabber)
+		{
+			friendsGrabber.interrupt();
+			friendsGrabber = null;
+		}
 	}
 }
