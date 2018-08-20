@@ -14,6 +14,7 @@ import co.il.nmh.easy.selenium.enums.MouseButton;
 import co.il.nmh.easy.selenium.enums.SearchBy;
 import co.il.nmh.easy.selenium.enums.WaitCondition;
 import co.il.nmh.easy.selenium.exceptions.SeleniumActionTimeout;
+import co.il.nmh.easy.utils.EasyThread;
 import co.il.nmh.linkedin.circle.expander.core.listeners.FriendsGrabberListener;
 import co.il.nmh.linkedin.circle.expander.core.steps.GetFriendDetailsStep;
 import co.il.nmh.linkedin.circle.expander.core.steps.LoginStep;
@@ -27,7 +28,7 @@ import co.il.nmh.linkedin.circle.expander.utils.SharedResources;
  * @author Maor Hamami
  */
 
-public class FriendsGrabber extends Thread
+public class FriendsGrabber extends EasyThread
 {
 	private String username;
 	private String password;
@@ -35,8 +36,17 @@ public class FriendsGrabber extends Thread
 
 	private Set<FriendsGrabberListener> listeners;
 
+	private EasySeleniumBrowser easySeleniumBrowser;
+	private int tries;
+	private int sameElement;
+	private boolean stoppedManually;
+	private FriendDetials lastFriendDetials;
+	private FriendProperties friendProperties;
+
 	public FriendsGrabber(String username, String password, Set<String> filter)
 	{
+		super("FriendsGrabber");
+
 		this.username = username;
 		this.password = password;
 		this.filter = filter;
@@ -50,51 +60,85 @@ public class FriendsGrabber extends Thread
 	}
 
 	@Override
-	public void run()
+	protected void init()
 	{
 		log("linkedin friends grabber initiating", LogTypeEnum.INFO);
 
-		EasySeleniumBrowser easySeleniumBrowser = null;
+		easySeleniumBrowser = new EasySeleniumBrowser(BrowserType.CHROME);
 
+		tries = 0;
+		sameElement = 0;
+		lastFriendDetials = null;
+		friendProperties = SharedResources.INSTANCE.getLinkedingCircleExpanderProperties().getFriend();
+	}
+
+	@Override
+	public boolean loopRun() throws InterruptedException
+	{
 		try
 		{
-			easySeleniumBrowser = new EasySeleniumBrowser(BrowserType.CHROME);
+			LoginStatusEnum login = LoginStep.login(easySeleniumBrowser, username, password);
 
-			int tries = 0;
-			int sameElement = 0;
-			FriendDetials lastFriendDetials = null;
-			FriendProperties friendProperties = SharedResources.INSTANCE.getLinkedingCircleExpanderProperties().getFriend();
-
-			while (!isInterrupted())
+			switch (login)
 			{
-				LoginStatusEnum login = LoginStep.login(easySeleniumBrowser, username, password);
-
-				switch (login)
-				{
-					case ALREADY_LOGGED_IN:
-					case SUCCESS:
-						break;
-					case FAILED:
-						log("login failed", LogTypeEnum.ERROR);
-						return;
-					case LOGIC_FAILURE:
-						log("login failed - logic failure", LogTypeEnum.ERROR);
-						return;
-				}
-
-				if (isInterrupted())
-				{
+				case ALREADY_LOGGED_IN:
+				case SUCCESS:
 					break;
-				}
+				case FAILED:
+					log("login failed", LogTypeEnum.ERROR);
+					return false;
+				case LOGIC_FAILURE:
+					log("login failed - logic failure", LogTypeEnum.ERROR);
+					return false;
+			}
 
-				FriendDetials friendDetials = GetFriendDetailsStep.get(easySeleniumBrowser, lastFriendDetials);
+			if (isInterrupted())
+			{
+				return false;
+			}
 
-				if (isInterrupted())
+			FriendDetials friendDetials = GetFriendDetailsStep.get(easySeleniumBrowser, lastFriendDetials);
+
+			if (isInterrupted())
+			{
+				return false;
+			}
+
+			if (null == friendDetials)
+			{
+				tries++;
+
+				if (tries == 2)
 				{
-					break;
+					refresh(easySeleniumBrowser);
+					tries = 0;
+				}
+			}
+
+			else if (friendDetials == lastFriendDetials)
+			{
+				sameElement++;
+
+				if (sameElement == 10)
+				{
+					log("Sleeping for 10 min, probably too many requests", LogTypeEnum.INFO);
+					Thread.sleep(1000 * 60 * 10);
+					refresh(easySeleniumBrowser);
+
+					sameElement = 8;
 				}
 
-				if (null == friendDetials)
+				else
+				{
+					Thread.sleep(1000);
+				}
+			}
+
+			else
+			{
+				lastFriendDetials = friendDetials;
+
+				if (!handleFriend(easySeleniumBrowser, friendProperties, friendDetials))
 				{
 					tries++;
 
@@ -104,53 +148,16 @@ public class FriendsGrabber extends Thread
 						tries = 0;
 					}
 				}
-
-				else if (friendDetials == lastFriendDetials)
-				{
-					sameElement++;
-
-					if (sameElement == 10)
-					{
-						log("Sleeping for 10 min, probably too many requests", LogTypeEnum.INFO);
-						Thread.sleep(1000 * 60 * 10);
-						refresh(easySeleniumBrowser);
-
-						sameElement = 8;
-					}
-
-					else
-					{
-						Thread.sleep(1000);
-					}
-				}
-
-				else
-				{
-					lastFriendDetials = friendDetials;
-
-					if (!handleFriend(easySeleniumBrowser, friendProperties, friendDetials))
-					{
-						tries++;
-
-						if (tries == 2)
-						{
-							refresh(easySeleniumBrowser);
-							tries = 0;
-						}
-					}
-				}
 			}
 
-			if (isInterrupted())
-			{
-				log("stopped manually", LogTypeEnum.INFO);
-			}
+			return true;
 		}
 		catch (WebDriverException e)
 		{
 			if (e.getCause() instanceof InterruptedException)
 			{
 				log("stopped manually", LogTypeEnum.INFO);
+				stoppedManually = true;
 			}
 
 			else if (e instanceof NoSuchWindowException || e instanceof SessionNotCreatedException)
@@ -167,17 +174,26 @@ public class FriendsGrabber extends Thread
 		{
 			log("error occured - " + e.getMessage(), LogTypeEnum.ERROR);
 		}
-		finally
-		{
-			if (null != easySeleniumBrowser)
-			{
-				easySeleniumBrowser.close();
-			}
 
-			for (FriendsGrabberListener friendsGrabberListener : listeners)
-			{
-				friendsGrabberListener.stopped();
-			}
+		return false;
+	}
+
+	@Override
+	protected void runEnded()
+	{
+		if (isInterrupted() && !stoppedManually)
+		{
+			log("stopped manually", LogTypeEnum.INFO);
+		}
+
+		if (null != easySeleniumBrowser)
+		{
+			easySeleniumBrowser.close();
+		}
+
+		for (FriendsGrabberListener friendsGrabberListener : listeners)
+		{
+			friendsGrabberListener.stopped();
 		}
 	}
 

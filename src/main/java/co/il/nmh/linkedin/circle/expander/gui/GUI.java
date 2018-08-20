@@ -175,6 +175,15 @@ public class GUI extends EasyFrame implements LoginPanelListener, ActionPanelLis
 		if (null != friendsGrabber)
 		{
 			friendsGrabber.interrupt();
+
+			try
+			{
+				friendsGrabber.join();
+			}
+			catch (InterruptedException e)
+			{
+			}
+
 			friendsGrabber = null;
 		}
 	}
