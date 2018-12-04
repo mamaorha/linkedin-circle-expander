@@ -26,13 +26,30 @@ public class SharedResources
 	{
 		objectMapper = new ObjectMapper();
 
-		try
+		File localProperties = new File("properties.json");
+
+		if (localProperties.exists())
 		{
-			linkedingCircleExpanderProperties = objectMapper.readValue(ClassLoader.getSystemResourceAsStream("properties.json"), LinkedingCircleExpanderProperties.class);
+			try
+			{
+				linkedingCircleExpanderProperties = objectMapper.readValue(localProperties, LinkedingCircleExpanderProperties.class);
+			}
+
+			catch (Exception e)
+			{
+			}
 		}
-		catch (Exception e)
+
+		if (null == linkedingCircleExpanderProperties)
 		{
-			throw new RuntimeException(e);
+			try
+			{
+				linkedingCircleExpanderProperties = objectMapper.readValue(ClassLoader.getSystemResourceAsStream("properties.json"), LinkedingCircleExpanderProperties.class);
+			}
+			catch (Exception e)
+			{
+				throw new RuntimeException(e);
+			}
 		}
 
 		File settings = new File("settings.json");

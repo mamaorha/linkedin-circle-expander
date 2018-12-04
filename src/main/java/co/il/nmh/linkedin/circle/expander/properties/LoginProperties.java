@@ -12,5 +12,5 @@ public class LoginProperties
 	private String verifyUrl;
 	private String usernameTbId;
 	private String passwordTbId;
-	private String connectBtnId;
+	private String connectBtnCSSSelector;
 }

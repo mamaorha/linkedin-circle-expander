@@ -17,7 +17,7 @@ import co.il.nmh.linkedin.circle.expander.utils.SharedResources;
 
 public class GetFriendDetailsStep
 {
-	public static FriendDetials get(EasySeleniumBrowser easySeleniumBrowser, FriendDetials lastFriendDetials)
+	public static FriendDetials get(EasySeleniumBrowser easySeleniumBrowser, FriendDetials lastFriendDetials, int index)
 	{
 		FriendProperties friend = SharedResources.INSTANCE.getLinkedingCircleExpanderProperties().getFriend();
 
@@ -25,7 +25,7 @@ public class GetFriendDetailsStep
 		{
 			try
 			{
-				WebElement parentElement = easySeleniumBrowser.document().getElement(SearchBy.CLASS_NAME, friend.getParentClass(), 0, WaitCondition.ELEMENT_CREATION, 3);
+				WebElement parentElement = easySeleniumBrowser.document().getElement(SearchBy.CLASS_NAME, friend.getParentClass(), index, WaitCondition.ELEMENT_CREATION, 3);
 
 				if (null != lastFriendDetials && lastFriendDetials.getWebElement() == parentElement)
 				{

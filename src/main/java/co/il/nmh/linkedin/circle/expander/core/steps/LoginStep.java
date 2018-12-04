@@ -42,7 +42,7 @@ public class LoginStep
 
 			usernameTb = easySeleniumBrowser.document().getElement(SearchBy.ID, loginProperties.getUsernameTbId(), 0, WaitCondition.ELEMENT_CREATION, 10);
 			passwordTb = easySeleniumBrowser.document().getElement(SearchBy.ID, loginProperties.getPasswordTbId(), 0, WaitCondition.ELEMENT_CREATION, 10);
-			connectBtn = easySeleniumBrowser.document().getElement(SearchBy.ID, loginProperties.getConnectBtnId(), 0, WaitCondition.ELEMENT_CREATION, 10);
+			connectBtn = easySeleniumBrowser.document().getElement(SearchBy.CSS_SELECTOR, loginProperties.getConnectBtnCSSSelector(), 0, WaitCondition.ELEMENT_CREATION, 10);
 		}
 		catch (SeleniumActionTimeout e)
 		{

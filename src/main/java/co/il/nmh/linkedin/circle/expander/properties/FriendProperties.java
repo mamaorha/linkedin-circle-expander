@@ -13,5 +13,4 @@ public class FriendProperties
 	private String descriptionClass;
 	private String insightClass;
 	private String addClass;
-	private String closeScript;
 }

@@ -42,6 +42,7 @@ public class FriendsGrabber extends EasyThread
 	private boolean stoppedManually;
 	private FriendDetials lastFriendDetials;
 	private FriendProperties friendProperties;
+	private int index;
 
 	public FriendsGrabber(String username, String password, Set<String> filter)
 	{
@@ -97,7 +98,7 @@ public class FriendsGrabber extends EasyThread
 				return false;
 			}
 
-			FriendDetials friendDetials = GetFriendDetailsStep.get(easySeleniumBrowser, lastFriendDetials);
+			FriendDetials friendDetials = GetFriendDetailsStep.get(easySeleniumBrowser, lastFriendDetials, index);
 
 			if (isInterrupted())
 			{
@@ -138,14 +139,25 @@ public class FriendsGrabber extends EasyThread
 			{
 				lastFriendDetials = friendDetials;
 
-				if (!handleFriend(easySeleniumBrowser, friendProperties, friendDetials))
-				{
-					tries++;
+				String filterValidation = findFilter(friendDetials);
 
-					if (tries == 2)
+				if (null != filterValidation)
+				{
+					log("ignoring suggestion '" + friendDetials.getName() + "' as it contains the exclude filter '" + filterValidation + "'", LogTypeEnum.INFO);
+					index++;
+				}
+
+				else
+				{
+					if (!addFriend(easySeleniumBrowser, friendProperties, friendDetials))
 					{
-						refresh(easySeleniumBrowser);
-						tries = 0;
+						tries++;
+
+						if (tries == 2)
+						{
+							refresh(easySeleniumBrowser);
+							tries = 0;
+						}
 					}
 				}
 			}
@@ -201,22 +213,7 @@ public class FriendsGrabber extends EasyThread
 	{
 		log("refreshing page", LogTypeEnum.INFO);
 		easySeleniumBrowser.navigator().refresh();
-	}
-
-	private boolean handleFriend(EasySeleniumBrowser easySeleniumBrowser, FriendProperties friendProperties, FriendDetials friendDetials)
-	{
-		String filterValidation = findFilter(friendDetials);
-
-		if (null != filterValidation)
-		{
-			removeFriend(easySeleniumBrowser, friendProperties, friendDetials);
-			return true;
-		}
-
-		else
-		{
-			return addFriend(easySeleniumBrowser, friendProperties, friendDetials);
-		}
+		index = 0;
 	}
 
 	private String findFilter(FriendDetials friendDetials)
@@ -237,17 +234,11 @@ public class FriendsGrabber extends EasyThread
 		return null;
 	}
 
-	private void removeFriend(EasySeleniumBrowser easySeleniumBrowser, FriendProperties friendProperties, FriendDetials friendDetials)
-	{
-		log("removing suggestion '" + friendDetials.getName() + "' as it contains the exclude filter '" + filter + "'", LogTypeEnum.INFO);
-		easySeleniumBrowser.action().execJs(friendProperties.getCloseScript());
-	}
-
 	private boolean addFriend(EasySeleniumBrowser easySeleniumBrowser, FriendProperties friendProperties, FriendDetials friendDetials)
 	{
 		try
 		{
-			WebElement AddElement = easySeleniumBrowser.document().getElement(SearchBy.CLASS_NAME, friendProperties.getAddClass(), 0, WaitCondition.CLICKABILITY_OF_ELEMENT, 5);
+			WebElement AddElement = easySeleniumBrowser.document().getElement(friendDetials.getWebElement(), SearchBy.CLASS_NAME, friendProperties.getAddClass(), 0, WaitCondition.CLICKABILITY_OF_ELEMENT, 5);
 			easySeleniumBrowser.action().click(AddElement, MouseButton.LEFT);
 
 			log("connecting suggestion '" + friendDetials.getName() + "'", LogTypeEnum.INFO);
