@@ -1,13 +1,12 @@
 package co.il.nmh.linkedin.circle.expander.utils;
 
+import co.il.nmh.linkedin.circle.expander.properties.LinkedinCircleExpanderProperties;
+import co.il.nmh.linkedin.circle.expander.properties.SettingsProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.File;
 import java.io.PrintWriter;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import co.il.nmh.linkedin.circle.expander.properties.LinkedingCircleExpanderProperties;
-import co.il.nmh.linkedin.circle.expander.properties.SettingsProperties;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Maor Hamami
@@ -19,7 +18,7 @@ public class SharedResources
 	public static final SharedResources INSTANCE = new SharedResources();
 
 	protected ObjectMapper objectMapper;
-	protected LinkedingCircleExpanderProperties linkedingCircleExpanderProperties;
+	protected LinkedinCircleExpanderProperties linkedinCircleExpanderProperties;
 	protected SettingsProperties settingsProperties;
 
 	private SharedResources()
@@ -32,7 +31,7 @@ public class SharedResources
 		{
 			try
 			{
-				linkedingCircleExpanderProperties = objectMapper.readValue(localProperties, LinkedingCircleExpanderProperties.class);
+				linkedinCircleExpanderProperties = objectMapper.readValue(localProperties, LinkedinCircleExpanderProperties.class);
 			}
 
 			catch (Exception e)
@@ -40,11 +39,11 @@ public class SharedResources
 			}
 		}
 
-		if (null == linkedingCircleExpanderProperties)
+		if (null == linkedinCircleExpanderProperties)
 		{
 			try
 			{
-				linkedingCircleExpanderProperties = objectMapper.readValue(ClassLoader.getSystemResourceAsStream("properties.json"), LinkedingCircleExpanderProperties.class);
+				linkedinCircleExpanderProperties = objectMapper.readValue(ClassLoader.getSystemResourceAsStream("properties.json"), LinkedinCircleExpanderProperties.class);
 			}
 			catch (Exception e)
 			{
@@ -67,9 +66,9 @@ public class SharedResources
 		}
 	}
 
-	public LinkedingCircleExpanderProperties getLinkedingCircleExpanderProperties()
+	public LinkedinCircleExpanderProperties getLinkedinCircleExpanderProperties()
 	{
-		return linkedingCircleExpanderProperties;
+		return linkedinCircleExpanderProperties;
 	}
 
 	public SettingsProperties getSettingsProperties()

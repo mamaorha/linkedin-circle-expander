@@ -1,19 +1,13 @@
 package co.il.nmh.linkedin.circle.expander.gui.panels;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-
+import co.il.nmh.linkedin.circle.expander.gui.listeners.ActionPanelListener;
 import org.apache.commons.lang3.StringUtils;
 
-import co.il.nmh.linkedin.circle.expander.gui.listeners.ActionPanelListener;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Maor Hamami
@@ -54,25 +48,20 @@ public class ActionPanel extends JPanel
 
 	private void addEvents()
 	{
-		startBtn.addActionListener(new ActionListener()
-		{
-			@Override
-			public void actionPerformed(ActionEvent e)
+		startBtn.addActionListener(e -> {
+			if ("Start".equals(startBtn.getText()))
 			{
-				if ("Start".equals(startBtn.getText()))
+				for (ActionPanelListener actionPanelListener : actionPanelListeners)
 				{
-					for (ActionPanelListener actionPanelListener : actionPanelListeners)
-					{
-						actionPanelListener.start();
-					}
-
-					startBtn.setText("Stop");
+					actionPanelListener.start();
 				}
 
-				else if ("Stop".equals(startBtn.getText()))
-				{
-					stop();
-				}
+				startBtn.setText("Stop");
+			}
+
+			else if ("Stop".equals(startBtn.getText()))
+			{
+				stop();
 			}
 		});
 	}

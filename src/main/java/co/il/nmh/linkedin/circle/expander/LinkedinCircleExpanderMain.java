@@ -7,7 +7,7 @@ import co.il.nmh.linkedin.circle.expander.gui.GUI;
  */
 public class LinkedinCircleExpanderMain
 {
-	public static void main(String[] args) throws InterruptedException
+	public static void main(String[] args)
 	{
 		new GUI();
 	}

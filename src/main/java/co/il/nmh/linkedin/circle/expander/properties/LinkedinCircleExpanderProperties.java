@@ -6,7 +6,7 @@ import lombok.Data;
  * @author Maor Hamami
  */
 @Data
-public class LinkedingCircleExpanderProperties
+public class LinkedinCircleExpanderProperties
 {
 	private String myNetworkPage;
 	private String verifyUrl;

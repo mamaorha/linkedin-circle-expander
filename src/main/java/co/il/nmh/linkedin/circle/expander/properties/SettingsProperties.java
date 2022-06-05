@@ -1,8 +1,9 @@
 package co.il.nmh.linkedin.circle.expander.properties;
 
-import java.util.Set;
-
+import co.il.nmh.linkedin.circle.expander.data.Filter;
 import lombok.Data;
+
+import java.util.Set;
 
 /**
  * @author Maor Hamami
@@ -11,5 +12,5 @@ import lombok.Data;
 public class SettingsProperties
 {
 	private String username;
-	private Set<String> filter;
+	private Set<Filter> filter;
 }

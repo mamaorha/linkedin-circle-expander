@@ -1,7 +1,5 @@
 package co.il.nmh.linkedin.circle.expander.core.steps;
 
-import org.openqa.selenium.WebElement;
-
 import co.il.nmh.easy.selenium.EasySeleniumBrowser;
 import co.il.nmh.easy.selenium.data.VerificationResponse;
 import co.il.nmh.easy.selenium.enums.CompareString;
@@ -10,9 +8,10 @@ import co.il.nmh.easy.selenium.enums.SearchBy;
 import co.il.nmh.easy.selenium.enums.WaitCondition;
 import co.il.nmh.easy.selenium.exceptions.SeleniumActionTimeout;
 import co.il.nmh.linkedin.circle.expander.data.enums.LoginStatusEnum;
-import co.il.nmh.linkedin.circle.expander.properties.LinkedingCircleExpanderProperties;
+import co.il.nmh.linkedin.circle.expander.properties.LinkedinCircleExpanderProperties;
 import co.il.nmh.linkedin.circle.expander.properties.LoginProperties;
 import co.il.nmh.linkedin.circle.expander.utils.SharedResources;
+import org.openqa.selenium.WebElement;
 
 /**
  * @author Maor Hamami
@@ -22,10 +21,10 @@ public class LoginStep
 {
 	public static LoginStatusEnum login(EasySeleniumBrowser easySeleniumBrowser, String username, String password)
 	{
-		LinkedingCircleExpanderProperties linkedingCircleExpanderProperties = SharedResources.INSTANCE.getLinkedingCircleExpanderProperties();
-		LoginProperties loginProperties = linkedingCircleExpanderProperties.getLogin();
+		LinkedinCircleExpanderProperties linkedinCircleExpanderProperties = SharedResources.INSTANCE.getLinkedinCircleExpanderProperties();
+		LoginProperties loginProperties = linkedinCircleExpanderProperties.getLogin();
 
-		VerificationResponse networkPage = easySeleniumBrowser.veirfy().verifyURL(CompareString.CONTAINS, linkedingCircleExpanderProperties.getMyNetworkPage(), true, 2);
+		VerificationResponse networkPage = easySeleniumBrowser.veirfy().verifyURL(CompareString.CONTAINS, linkedinCircleExpanderProperties.getMyNetworkPage(), true, 2);
 
 		if (networkPage.isSuccess())
 		{
@@ -59,9 +58,9 @@ public class LoginStep
 		{
 			try
 			{
-				easySeleniumBrowser.navigator().navigate(linkedingCircleExpanderProperties.getMyNetworkPage(), 10);
+				easySeleniumBrowser.navigator().navigate(linkedinCircleExpanderProperties.getMyNetworkPage(), 10);
 
-				verifyURL = easySeleniumBrowser.veirfy().verifyURL(CompareString.CONTAINS, linkedingCircleExpanderProperties.getVerifyUrl(), true, 10);
+				verifyURL = easySeleniumBrowser.veirfy().verifyURL(CompareString.CONTAINS, linkedinCircleExpanderProperties.getVerifyUrl(), true, 10);
 
 				if (verifyURL.isSuccess())
 				{

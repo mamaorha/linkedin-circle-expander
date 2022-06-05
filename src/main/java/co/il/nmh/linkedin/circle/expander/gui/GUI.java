@@ -1,15 +1,11 @@
 package co.il.nmh.linkedin.circle.expander.gui;
 
-import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.util.Set;
-
 import co.il.nmh.easy.swing.components.EasyConsolePanel;
 import co.il.nmh.easy.swing.components.EasyPaddingPanel;
 import co.il.nmh.easy.swing.components.gui.EasyFrame;
 import co.il.nmh.linkedin.circle.expander.core.FriendsGrabber;
 import co.il.nmh.linkedin.circle.expander.core.listeners.FriendsGrabberListener;
+import co.il.nmh.linkedin.circle.expander.data.Filter;
 import co.il.nmh.linkedin.circle.expander.data.enums.LogTypeEnum;
 import co.il.nmh.linkedin.circle.expander.gui.listeners.ActionPanelListener;
 import co.il.nmh.linkedin.circle.expander.gui.listeners.LoginPanelListener;
@@ -19,6 +15,9 @@ import co.il.nmh.linkedin.circle.expander.gui.panels.LoginPanel;
 import co.il.nmh.linkedin.circle.expander.properties.SettingsProperties;
 import co.il.nmh.linkedin.circle.expander.utils.SharedResources;
 import lombok.extern.slf4j.Slf4j;
+
+import java.awt.*;
+import java.util.Set;
 
 /**
  * @author Maor Hamami
@@ -113,7 +112,7 @@ public class GUI extends EasyFrame implements LoginPanelListener, ActionPanelLis
 
 		saveSettings();
 
-		friendsGrabber = new FriendsGrabber(loginPanel.getUsername(), loginPanel.getPassword(), filterPanel.getFilter());
+		friendsGrabber = new FriendsGrabber(loginPanel.getUsername(), loginPanel.getPassword(), filterPanel.getFilters());
 		friendsGrabber.addListener(this);
 		friendsGrabber.start();
 	}
@@ -161,7 +160,7 @@ public class GUI extends EasyFrame implements LoginPanelListener, ActionPanelLis
 	private void saveSettings()
 	{
 		String username = loginPanel.getUsername();
-		Set<String> filter = filterPanel.getFilter();
+		Set<Filter> filter = filterPanel.getFilters();
 
 		SettingsProperties settingsProperties = SharedResources.INSTANCE.getSettingsProperties();
 		settingsProperties.setUsername(username);

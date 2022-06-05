@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class FriendProperties
 {
-	private String parentClass;
+	private String parentXpath;
 	private String nameClass;
 	private String descriptionClass;
 	private String insightClass;

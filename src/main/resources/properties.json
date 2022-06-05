@@ -11,10 +11,10 @@
 	},
 	"friend" :
 	{
-		"parentClass" : "mn-discovery-person-card mn-discovery-person-card--center-align artdeco-card ember-view",
-		"nameClass" : "mn-discovery-person-card__name t-14 t-black t-bold",
-		"descriptionClass": "mn-discovery-person-card__occupation t-12 t-black--light t-normal",
-		"insightClass" : "member-insights__info",
+		"parentXpath" : "//li[contains(@class, 'ember-view display-flex ') and contains(normalize-space(string(self::li)), 'Connect')]",
+		"nameClass" : "discover-person-card__name t-16 t-black t-bold",
+		"descriptionClass": "discover-person-card__occupation t-14 t-black--light t-normal",
+		"insightClass" : "member-insights__reason text-align-left t-12 t-black--light t-normal",
 		"addClass" : "artdeco-button__text"
 	}
 }

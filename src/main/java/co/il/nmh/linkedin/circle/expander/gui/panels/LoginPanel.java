@@ -1,18 +1,15 @@
 package co.il.nmh.linkedin.circle.expander.gui.panels;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.event.DocumentEvent;
-
 import co.il.nmh.easy.swing.components.text.EasyPasswordField;
 import co.il.nmh.easy.swing.components.text.EasyTextField;
 import co.il.nmh.easy.swing.listeners.DocumentChangedListener;
 import co.il.nmh.linkedin.circle.expander.gui.listeners.LoginPanelListener;
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Maor Hamami

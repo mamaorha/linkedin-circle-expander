@@ -1,13 +1,5 @@
 package co.il.nmh.linkedin.circle.expander.core;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import org.openqa.selenium.NoSuchWindowException;
-import org.openqa.selenium.SessionNotCreatedException;
-import org.openqa.selenium.WebDriverException;
-import org.openqa.selenium.WebElement;
-
 import co.il.nmh.easy.selenium.EasySeleniumBrowser;
 import co.il.nmh.easy.selenium.enums.BrowserType;
 import co.il.nmh.easy.selenium.enums.MouseButton;
@@ -18,243 +10,197 @@ import co.il.nmh.easy.utils.EasyThread;
 import co.il.nmh.linkedin.circle.expander.core.listeners.FriendsGrabberListener;
 import co.il.nmh.linkedin.circle.expander.core.steps.GetFriendDetailsStep;
 import co.il.nmh.linkedin.circle.expander.core.steps.LoginStep;
-import co.il.nmh.linkedin.circle.expander.data.FriendDetials;
+import co.il.nmh.linkedin.circle.expander.data.Filter;
+import co.il.nmh.linkedin.circle.expander.data.FriendDetails;
 import co.il.nmh.linkedin.circle.expander.data.enums.LogTypeEnum;
 import co.il.nmh.linkedin.circle.expander.data.enums.LoginStatusEnum;
 import co.il.nmh.linkedin.circle.expander.properties.FriendProperties;
 import co.il.nmh.linkedin.circle.expander.utils.SharedResources;
+import org.openqa.selenium.*;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Maor Hamami
  */
 
-public class FriendsGrabber extends EasyThread
-{
-	private String username;
-	private String password;
-	private Set<String> filter;
+public class FriendsGrabber extends EasyThread {
+    private final String username;
+    private final String password;
+    private final Set<String> includeFilters;
+    private final Set<String> excludeFilters;
 
-	private Set<FriendsGrabberListener> listeners;
+    private final Set<FriendsGrabberListener> listeners;
 
-	private EasySeleniumBrowser easySeleniumBrowser;
-	private int tries;
-	private int sameElement;
-	private boolean stoppedManually;
-	private FriendDetials lastFriendDetials;
-	private FriendProperties friendProperties;
-	private int index;
+    private EasySeleniumBrowser easySeleniumBrowser;
+    private int tries;
+    private boolean stoppedManually;
+    private FriendDetails lastFriendDetails;
+    private FriendProperties friendProperties;
+    private int index;
 
-	public FriendsGrabber(String username, String password, Set<String> filter)
-	{
-		super("FriendsGrabber");
+    public FriendsGrabber(String username, String password, Set<Filter> filters) {
+        super("FriendsGrabber");
 
-		this.username = username;
-		this.password = password;
-		this.filter = filter;
+        this.username = username;
+        this.password = password;
 
-		listeners = new HashSet<>();
-	}
+        if (filters == null) filters = new HashSet<>();
+        includeFilters = filters.stream().filter(Filter::isInclude).map(Filter::getValue).map(String::toLowerCase).collect(Collectors.toSet());
+        excludeFilters = filters.stream().filter(f -> !f.isInclude()).map(Filter::getValue).map(String::toLowerCase).collect(Collectors.toSet());
 
-	public void addListener(FriendsGrabberListener listener)
-	{
-		listeners.add(listener);
-	}
+        listeners = new HashSet<>();
+    }
 
-	@Override
-	protected void init()
-	{
-		log("linkedin friends grabber initiating", LogTypeEnum.INFO);
+    public void addListener(FriendsGrabberListener listener) {
+        listeners.add(listener);
+    }
 
-		easySeleniumBrowser = new EasySeleniumBrowser(BrowserType.CHROME);
+    @Override
+    protected void init() {
+        log("linkedin friends grabber initiating", LogTypeEnum.INFO);
 
-		tries = 0;
-		sameElement = 0;
-		lastFriendDetials = null;
-		friendProperties = SharedResources.INSTANCE.getLinkedingCircleExpanderProperties().getFriend();
-	}
+        easySeleniumBrowser = new EasySeleniumBrowser(BrowserType.CHROME);
 
-	@Override
-	public boolean loopRun() throws InterruptedException
-	{
-		try
-		{
-			LoginStatusEnum login = LoginStep.login(easySeleniumBrowser, username, password);
+        tries = 0;
+        lastFriendDetails = null;
+        friendProperties = SharedResources.INSTANCE.getLinkedinCircleExpanderProperties().getFriend();
+    }
 
-			switch (login)
-			{
-				case ALREADY_LOGGED_IN:
-				case SUCCESS:
-					break;
-				case FAILED:
-					log("login failed", LogTypeEnum.ERROR);
-					return false;
-				case LOGIC_FAILURE:
-					log("login failed - logic failure", LogTypeEnum.ERROR);
-					return false;
-			}
+    @Override
+    public boolean loopRun() {
+        try {
+            LoginStatusEnum login = LoginStep.login(easySeleniumBrowser, username, password);
 
-			if (isInterrupted())
-			{
-				return false;
-			}
+            switch (login) {
+                case ALREADY_LOGGED_IN:
+                case SUCCESS:
+                    break;
+                case FAILED:
+                    log("login failed", LogTypeEnum.ERROR);
+                    return false;
+                case LOGIC_FAILURE:
+                    log("login failed - logic failure", LogTypeEnum.ERROR);
+                    return false;
+            }
 
-			FriendDetials friendDetials = GetFriendDetailsStep.get(easySeleniumBrowser, lastFriendDetials, index);
+            if (isInterrupted()) {
+                return false;
+            }
 
-			if (isInterrupted())
-			{
-				return false;
-			}
+            FriendDetails friendDetails = GetFriendDetailsStep.get(easySeleniumBrowser, lastFriendDetails, index);
 
-			if (null == friendDetials)
-			{
-				tries++;
+            if (isInterrupted()) {
+                return false;
+            }
 
-				if (tries == 2)
-				{
-					refresh(easySeleniumBrowser);
-					tries = 0;
-				}
-			}
+            if (null == friendDetails) {
+                easySeleniumBrowser.action().sendKey(Keys.PAGE_DOWN);
+                Thread.sleep(2000);
+                tries++;
 
-			else if (friendDetials == lastFriendDetials)
-			{
-				sameElement++;
+                if (tries == 2) {
+                    refresh(easySeleniumBrowser);
+                    tries = 0;
+                }
+            } else if (friendDetails.equals(lastFriendDetails)) {
+                index++;
+            } else {
+                lastFriendDetails = friendDetails;
 
-				if (sameElement == 10)
-				{
-					log("Sleeping for 10 min, probably too many requests", LogTypeEnum.INFO);
-					Thread.sleep(1000 * 60 * 10);
-					refresh(easySeleniumBrowser);
+                if (shouldAddFriend(friendDetails)) {
+                    if (!addFriend(easySeleniumBrowser, friendProperties, friendDetails)) {
+                        tries++;
 
-					sameElement = 8;
-				}
+                        if (tries == 2) {
+                            refresh(easySeleniumBrowser);
+                            tries = 0;
+                        }
+                    } else {
+                        tries = 0;
+                    }
+                }
+            }
 
-				else
-				{
-					Thread.sleep(1000);
-				}
-			}
+            return true;
+        } catch (WebDriverException e) {
+            if (e.getCause() instanceof InterruptedException) {
+                log("stopped manually", LogTypeEnum.INFO);
+                stoppedManually = true;
+            } else if (e instanceof NoSuchWindowException || e instanceof SessionNotCreatedException) {
+                log("browser window was closed manually", LogTypeEnum.ERROR);
+            } else {
+                log("error occurred - " + e.getMessage(), LogTypeEnum.ERROR);
+            }
+        } catch (Exception e) {
+            log("error occurred - " + e.getMessage(), LogTypeEnum.ERROR);
+        }
 
-			else
-			{
-				lastFriendDetials = friendDetials;
+        return false;
+    }
 
-				String filterValidation = findFilter(friendDetials);
+    private boolean shouldAddFriend(FriendDetails friendDetails) {
+        if("unknown".equals(friendDetails.getName())) return false;
 
-				if (null != filterValidation)
-				{
-					log("ignoring suggestion '" + friendDetials.getName() + "' as it contains the exclude filter '" + filterValidation + "'", LogTypeEnum.INFO);
-					index++;
-				}
+        if (!includeFilters.isEmpty() && includeFilters.stream().noneMatch(value -> isFilterMatch(friendDetails, value))) {
+            log("ignoring suggestion '" + friendDetails.getName() + "' as it's not part of the include filters", LogTypeEnum.INFO);
+            index++;
 
-				else
-				{
-					if (!addFriend(easySeleniumBrowser, friendProperties, friendDetials))
-					{
-						tries++;
+            return false;
+        }
 
-						if (tries == 2)
-						{
-							refresh(easySeleniumBrowser);
-							tries = 0;
-						}
-					}
-				}
-			}
+        return excludeFilters.stream().filter(value -> isFilterMatch(friendDetails, value)).findAny().map(value -> {
+            log("ignoring suggestion '" + friendDetails.getName() + "' as it contains the exclude filter '" + value + "'", LogTypeEnum.INFO);
+            index++;
 
-			return true;
-		}
-		catch (WebDriverException e)
-		{
-			if (e.getCause() instanceof InterruptedException)
-			{
-				log("stopped manually", LogTypeEnum.INFO);
-				stoppedManually = true;
-			}
+            return false;
+        }).orElse(true);
+    }
 
-			else if (e instanceof NoSuchWindowException || e instanceof SessionNotCreatedException)
-			{
-				log("browser window was closed manually", LogTypeEnum.ERROR);
-			}
+    @Override
+    protected void runEnded() {
+        if (isInterrupted() && !stoppedManually) {
+            log("stopped manually", LogTypeEnum.INFO);
+        }
 
-			else
-			{
-				log("error occured - " + e.getMessage(), LogTypeEnum.ERROR);
-			}
-		}
-		catch (Exception e)
-		{
-			log("error occured - " + e.getMessage(), LogTypeEnum.ERROR);
-		}
+        if (null != easySeleniumBrowser) {
+            easySeleniumBrowser.close();
+        }
 
-		return false;
-	}
+        for (FriendsGrabberListener friendsGrabberListener : listeners) {
+            friendsGrabberListener.stopped();
+        }
+    }
 
-	@Override
-	protected void runEnded()
-	{
-		if (isInterrupted() && !stoppedManually)
-		{
-			log("stopped manually", LogTypeEnum.INFO);
-		}
+    private void refresh(EasySeleniumBrowser easySeleniumBrowser) {
+        log("refreshing page", LogTypeEnum.INFO);
+        easySeleniumBrowser.navigator().refresh();
+        index = 0;
+    }
 
-		if (null != easySeleniumBrowser)
-		{
-			easySeleniumBrowser.close();
-		}
+    private boolean isFilterMatch(FriendDetails friendDetails, String value) {
+        return friendDetails.getName().toLowerCase().contains(value) ||
+                friendDetails.getDescription().toLowerCase().contains(value) ||
+                friendDetails.getInsight().toLowerCase().contains(value);
+    }
 
-		for (FriendsGrabberListener friendsGrabberListener : listeners)
-		{
-			friendsGrabberListener.stopped();
-		}
-	}
+    private boolean addFriend(EasySeleniumBrowser easySeleniumBrowser, FriendProperties friendProperties, FriendDetails friendDetails) {
+        try {
+            WebElement AddElement = easySeleniumBrowser.document().getElement(friendDetails.getWebElement(), SearchBy.CLASS_NAME, friendProperties.getAddClass(), 0, WaitCondition.CLICKABILITY_OF_ELEMENT, 5);
+            easySeleniumBrowser.action().click(AddElement, MouseButton.LEFT);
 
-	private void refresh(EasySeleniumBrowser easySeleniumBrowser)
-	{
-		log("refreshing page", LogTypeEnum.INFO);
-		easySeleniumBrowser.navigator().refresh();
-		index = 0;
-	}
+            log("connecting suggestion '" + friendDetails + "'", LogTypeEnum.INFO);
+            return true;
+        } catch (SeleniumActionTimeout e) {
+            return false;
+        }
+    }
 
-	private String findFilter(FriendDetials friendDetials)
-	{
-		if (null != filter)
-		{
-			String lowerName = friendDetials.getName().toLowerCase();
-
-			for (String currFilter : filter)
-			{
-				if (lowerName.contains(currFilter) || friendDetials.getDescription().contains(currFilter) || friendDetials.getInsight().contains(currFilter))
-				{
-					return currFilter;
-				}
-			}
-		}
-
-		return null;
-	}
-
-	private boolean addFriend(EasySeleniumBrowser easySeleniumBrowser, FriendProperties friendProperties, FriendDetials friendDetials)
-	{
-		try
-		{
-			WebElement AddElement = easySeleniumBrowser.document().getElement(friendDetials.getWebElement(), SearchBy.CLASS_NAME, friendProperties.getAddClass(), 0, WaitCondition.CLICKABILITY_OF_ELEMENT, 5);
-			easySeleniumBrowser.action().click(AddElement, MouseButton.LEFT);
-
-			log("connecting suggestion '" + friendDetials.getName() + "'", LogTypeEnum.INFO);
-			return true;
-		}
-		catch (SeleniumActionTimeout e)
-		{
-			return false;
-		}
-	}
-
-	private void log(String message, LogTypeEnum logType)
-	{
-		for (FriendsGrabberListener friendsGrabberListener : listeners)
-		{
-			friendsGrabberListener.log(message, logType);
-		}
-	}
+    private void log(String message, LogTypeEnum logType) {
+        for (FriendsGrabberListener friendsGrabberListener : listeners) {
+            friendsGrabberListener.log(message, logType);
+        }
+    }
 }

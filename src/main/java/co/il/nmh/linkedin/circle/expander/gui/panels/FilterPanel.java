@@ -1,176 +1,140 @@
 package co.il.nmh.linkedin.circle.expander.gui.panels;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import co.il.nmh.easy.swing.components.EasyScrollPane;
+import co.il.nmh.easy.swing.components.table.listeners.EasyTableElementListener;
+import co.il.nmh.easy.swing.components.table.listeners.EasyTableItemSelectedChangedListener;
+import co.il.nmh.easy.swing.components.text.EasyTextField;
+import co.il.nmh.linkedin.circle.expander.data.Filter;
+import co.il.nmh.linkedin.circle.expander.gui.components.FilterTable;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
-
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-
-import co.il.nmh.easy.swing.components.list.EasyList;
-import co.il.nmh.easy.swing.components.list.listeners.EasyListElementListener;
-import co.il.nmh.easy.swing.components.list.listeners.EasyListItemSelectedChangedListener;
-import co.il.nmh.easy.swing.components.text.EasyTextField;
-import co.il.nmh.easy.swing.components.text.listeners.TextChangedListener;
 
 /**
  * @author Maor Hamami
  */
 
-public class FilterPanel extends JPanel
-{
-	private static final long serialVersionUID = -6969418307265853019L;
+public class FilterPanel extends JPanel {
+    private static final long serialVersionUID = -6969418307265853019L;
 
-	protected EasyList filterList;
-	protected JButton deleteBtn;
-	protected EasyTextField filterTb;
-	protected JButton addFilterBtn;
+    protected FilterTable filterTable;
+    protected JButton deleteBtn;
+    protected EasyTextField filterTb;
+    protected JButton addFilterBtn;
 
-	protected Set<String> filter;
+    protected Set<Filter> filters;
 
-	public FilterPanel()
-	{
-		setLayout(new GridBagLayout());
-		setBorder(new EmptyBorder(5, 0, 5, 0));
+    public FilterPanel() {
+        setLayout(new GridBagLayout());
+        setBorder(new EmptyBorder(5, 0, 5, 0));
 
-		buildPanel();
-		addEvents();
+        buildPanel();
+        addEvents();
 
-		filter = new HashSet<>();
-	}
+        filters = new HashSet<>();
+    }
 
-	private void buildPanel()
-	{
-		filterList = new EasyList();
-		deleteBtn = new JButton("delete");
-		deleteBtn.setEnabled(false);
+    private void buildPanel() {
+        filterTable = new FilterTable();
+        deleteBtn = new JButton("delete");
+        deleteBtn.setEnabled(false);
 
-		JLabel filterLbl = new JLabel("filter:");
-		filterTb = new EasyTextField(25);
-		addFilterBtn = new JButton("add");
+        JLabel filterLbl = new JLabel("filter:");
+        filterTb = new EasyTextField(25);
+        addFilterBtn = new JButton("add");
 
-		JPanel panel = new JPanel();
-		panel.add(filterLbl);
-		panel.add(filterTb);
-		panel.add(addFilterBtn);
+        JPanel panel = new JPanel();
+        panel.add(filterLbl);
+        panel.add(filterTb);
+        panel.add(addFilterBtn);
 
-		GridBagConstraints gridBagConstraints = new GridBagConstraints();
-		gridBagConstraints.fill = GridBagConstraints.BOTH;
-		gridBagConstraints.weightx = 1;
-		gridBagConstraints.weighty = 1;
-		gridBagConstraints.gridx++;
+        GridBagConstraints gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.fill = GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1;
+        gridBagConstraints.weighty = 1;
+        gridBagConstraints.gridx++;
 
-		gridBagConstraints.gridy++;
-		add(filterList.getComponent(), gridBagConstraints);
+        gridBagConstraints.gridy++;
+        add(new EasyScrollPane(filterTable, 150, 150), gridBagConstraints);
 
-		gridBagConstraints.fill = GridBagConstraints.NONE;
-		gridBagConstraints.weightx = 0;
-		gridBagConstraints.weighty = 0;
+        gridBagConstraints.fill = GridBagConstraints.NONE;
+        gridBagConstraints.weightx = 0;
+        gridBagConstraints.weighty = 0;
 
-		gridBagConstraints.gridy++;
-		add(deleteBtn, gridBagConstraints);
+        gridBagConstraints.gridy++;
+        add(deleteBtn, gridBagConstraints);
 
-		gridBagConstraints.gridy++;
-		add(panel, gridBagConstraints);
-	}
+        gridBagConstraints.gridy++;
+        add(panel, gridBagConstraints);
+    }
 
-	private void addEvents()
-	{
-		filterList.addEasyListElementListener(new EasyListElementListener()
-		{
-			@Override
-			public void elementRemoved(int index, String element)
-			{
-				filter.remove(element);
-			}
+    private void addEvents() {
+        filterTable.addEasyTableElementListener(new EasyTableElementListener() {
+            @Override
+            public void elementRemoved(int index, Object element) {
+                if(element instanceof Filter) {
+                    filters.remove(element);
+                }
+            }
 
-			@Override
-			public void elementAdd(int index, String element)
-			{
-				filter.add(element);
-			}
-		});
+            @Override
+            public void elementAdd(int index, Object element) {
+                filters.add((Filter) element);
+            }
+        });
 
-		filterList.addEasyListItemSelectedChangedListener(new EasyListItemSelectedChangedListener()
-		{
-			@Override
-			public void selectionClear()
-			{
-				deleteBtn.setEnabled(false);
-			}
+        filterTable.addEasyTableItemSelectedChangedListener(new EasyTableItemSelectedChangedListener() {
+            @Override
+            public void selectionClear() {
+                deleteBtn.setEnabled(false);
+            }
 
-			@Override
-			public void selected(int[] selectedIndices)
-			{
-				deleteBtn.setEnabled(true);
-			}
-		});
+            @Override
+            public void selected(int[] selectedRows) {
+                deleteBtn.setEnabled(selectedRows.length > 0);
+            }
+        });
 
-		deleteBtn.addActionListener(new ActionListener()
-		{
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				filterList.removeSelected();
-			}
-		});
+        deleteBtn.addActionListener(e -> filterTable.deleteSelectedRows());
 
-		filterTb.addTextChangedListener(new TextChangedListener()
-		{
-			@Override
-			public void textChanged(String newText)
-			{
-				addFilterBtn.setEnabled(!newText.isEmpty());
-			}
-		});
+        filterTb.addTextChangedListener(newText -> addFilterBtn.setEnabled(!newText.isEmpty()));
 
-		addFilterBtn.addActionListener(new ActionListener()
-		{
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				String text = filterTb.getText();
+        addFilterBtn.addActionListener(e -> {
+            String text = filterTb.getText();
+            Filter filter = new Filter(text, false);
 
-				if (!filter.contains(text))
-				{
-					filterList.addElement(text);
-				}
+            if (!filters.contains(filter)) {
+                filterTable.add(filter);
+            }
 
-				filterTb.clear();
-				filterTb.requestFocus();
-			}
-		});
-	}
+            filterTb.clear();
+            filterTb.requestFocus();
+        });
+    }
 
-	public void setFilter(Set<String> filter)
-	{
-		if (null == filter)
-		{
-			filter = new HashSet<>();
-		}
+    public void setFilter(Set<Filter> filters) {
+        if (null == filters) {
+            filters = new HashSet<>();
+        }
 
-		filterList.clear();
+        filterTable.clear();
 
-		for (String currFilter : filter)
-		{
-			filterList.addElement(currFilter);
-		}
+        for (Filter currFilter : filters) {
+            filterTable.add(currFilter);
+        }
 
-		this.filter = filter;
-	}
+        this.filters = filters;
+    }
 
-	public Set<String> getFilter()
-	{
-		return filter;
-	}
+    public Set<Filter> getFilters() {
+        return filters;
+    }
 
-	public void lockGUI(boolean lock)
-	{
-		filterList.setEnabled(!lock);
-	}
+    public void lockGUI(boolean lock) {
+        deleteBtn.setEnabled(!lock && filterTable.getSelectedRows().length > 0);
+        filterTable.setEnabled(!lock);
+    }
 }
